@@ -1,12 +1,10 @@
 mod addon;
 mod database;
 mod error;
-mod model;
 mod settings;
 
 use database::Database;
 use error::Result;
-use model::Model;
 
 use gtk::prelude::*;
 use gtk::Inhibit;
@@ -19,8 +17,27 @@ const DATABASE_PATH: &str = "res/wow-classic.json";
 const ADDON_SUBMISSION_URL: &str =
     "https://github.com/steven-joruk/adona/issues/new?assignees=&labels=addon+submission&template=addon-submission.md&title=Addon+submission";
 
+pub struct Model {
+    // TODO: Remove this if/when relm supports connecting chil signals inside
+    // `view!`, specifically TreeSelection's `changed` signal.
+    relm: Relm<Win>,
+    available_addon_is_selected: bool,
+    installed_addon_is_selected: bool,
+}
+
+impl Model {
+    pub fn new(relm: Relm<Win>) -> Model {
+        Model {
+            relm,
+            available_addon_is_selected: false,
+            installed_addon_is_selected: false,
+        }
+    }
+}
+
 #[derive(Msg)]
 pub enum Msg {
+    AvailableViewSelectionChanged,
     DeleteAddon,
     InstallAddon,
     InstalledViewSelectionChanged,
@@ -32,20 +49,36 @@ pub enum Msg {
 
 #[widget]
 impl Widget for Win {
-    fn model(_: &Relm<Self>, _: ()) -> Model {
-        Model::new()
+    fn model(relm: &Relm<Self>, _: ()) -> Model {
+        Model::new(relm.clone())
     }
 
     fn update(&mut self, event: Msg) {
         match event {
+            Msg::AvailableViewSelectionChanged => {
+                let selection = self.available_view.get_selection();
+                match selection.get_selected() {
+                    Some((tree_model, iter)) => {
+                        self.model.available_addon_is_selected = true;
+                    }
+                    None => self.model.available_addon_is_selected = false,
+                }
+            }
             Msg::DeleteAddon => {
-                self.model.delete_addon();
                 println!("TODO: Delete the selected addon");
             }
             Msg::InstallAddon => {
                 println!("TODO: Install the selected addon");
             }
-            Msg::InstalledViewSelectionChanged => println!("Changed!"),
+            Msg::InstalledViewSelectionChanged => {
+                let selection = self.installed_view.get_selection();
+                match selection.get_selected() {
+                    Some((tree_model, iter)) => {
+                        self.model.installed_addon_is_selected = true;
+                    }
+                    None => self.model.installed_addon_is_selected = false,
+                }
+            }
             Msg::Quit => gtk::main_quit(),
             Msg::SubmitAddon => {
                 webbrowser::open(ADDON_SUBMISSION_URL).unwrap();
@@ -86,16 +119,13 @@ impl Widget for Win {
     // - Make columns sortable
     fn init_installed_tree_view(&mut self) {
         let selection = self.installed_view.get_selection();
-
-        // TODO: How do I get a reference to relm here?
-        /*
         connect!(
-            relm,
-            installed_view,
-            changed(_),
+            self.model.relm,
+            selection,
+            connect_changed(_),
             Msg::InstalledViewSelectionChanged
         );
-        */
+
         let cell = gtk::CellRendererText::new();
 
         let column = gtk::TreeViewColumn::new();
@@ -153,6 +183,14 @@ impl Widget for Win {
     }
 
     fn init_available_tree_view(&mut self) {
+        let selection = self.available_view.get_selection();
+        connect!(
+            self.model.relm,
+            selection,
+            connect_changed(_),
+            Msg::AvailableViewSelectionChanged
+        );
+
         let cell = gtk::CellRendererText::new();
 
         let column = gtk::TreeViewColumn::new();
@@ -199,12 +237,12 @@ impl Widget for Win {
                         spacing: PADDING,
                         gtk::Button {
                             label: "Update",
-                            sensitive: false,
+                            sensitive: self.model.installed_addon_is_selected,
                             clicked => Msg::Update,
                         },
                         gtk::Button {
                             label: "Delete",
-                            sensitive: false,
+                            sensitive: self.model.installed_addon_is_selected,
                             clicked => Msg::DeleteAddon,
                         },
                         #[name="search_installed"]
@@ -237,13 +275,13 @@ impl Widget for Win {
                         spacing: PADDING,
                         gtk::Button {
                             label: "Install",
-                            sensitive: false,
+                            sensitive: self.model.available_addon_is_selected,
                             clicked => Msg::InstallAddon,
                         },
                         // TODO: Add a 'last updated' tooltip
                         gtk::Button {
                             label: "Update database",
-                            sensitive: false,
+                            sensitive: true,
                             tooltip_text: Some("Test"),
                             clicked => Msg::UpdateDatabase,
                         },
