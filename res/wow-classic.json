@@ -1,28 +1,21 @@
 [
     {
         "name": "Bagnon",
-        "stars": 93,
         "description": "Single window displays for you inventory and bank",
-        "released": "2019-08-28T13:27:00.00+00:01",
-        "version": "8.2.3",
         "support_text": "Patreon",
         "support_link": "https://www.patreon.com/jaliborc",
         "source": {
             "owner": "tullamods",
-            "repo": "Bagnon"
+            "repo": "Bagnon",
+            "regex": "Questie-v.*.zip$"
         }
     },
     {
-        "name": "Questie",
-        "stars": 824,
-        "description": "A standalone Classic QuestHelper",
-        "released": "2019-10-18T20:00:00.00+00:01",
-        "version": "v4.3.0",
-        "support_text": "PayPal",
-        "support_link": "https://github.com/AeroScripts/QuestieDev#donation",
+        "name": "Bartender4",
         "source": {
-            "owner": "AeroScripts",
-            "repo": "QuestieDev"
+            "owner": "Nevcairiel",
+            "repo": "Bartender4",
+            "regex": "Bartender4-.*-classic.zip$"
         }
     }
 ]

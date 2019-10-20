@@ -3,7 +3,7 @@ use super::installed_widget::InstalledWidget;
 
 use gtk::prelude::*;
 use gtk::Inhibit;
-use relm::{connect, connect_stream, Relm, Widget};
+use relm::{Relm, Widget};
 use relm_derive::{widget, Msg};
 
 pub struct Model;

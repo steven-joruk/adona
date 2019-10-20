@@ -1,8 +1,9 @@
 use crate::addon::AddonSource;
 use crate::database::Database;
+use crate::error::Result;
 
 use gtk::prelude::*;
-use relm::{connect, Relm, Widget};
+use relm::{Relm, Widget};
 use relm_derive::{widget, Msg};
 
 // TODO: Determine this using the `dirs` module.
@@ -33,15 +34,19 @@ impl Widget for AvailableWidget {
         }
     }
 
+    fn handle_install_addon(&self) -> Result<()> {
+        let name = self.model.selected_addon_name.as_ref().unwrap();
+        let addon = self.model.database.find(&name).unwrap();
+        let details = addon.fetch_details()?;
+        Ok(addon.download_and_install(&details.address, "/tmp")?)
+    }
+
     fn update(&mut self, event: Msg) {
         match event {
             Msg::InstallAddon => {
-                if let Some(name) = &self.model.selected_addon_name {
-                    self.model
-                        .database
-                        .find(name)
-                        .and_then(|a| a.install().ok());
-                };
+                if let Err(e) = self.handle_install_addon() {
+                    eprintln!("Failed to install: {}", e);
+                }
             }
             Msg::SelectionChanged(selection) => match selection.get_selected() {
                 Some((tree_model, iter)) => {

@@ -1,5 +1,5 @@
 use gtk::prelude::*;
-use relm::{connect, Relm, Widget};
+use relm::{Relm, Widget};
 use relm_derive::{widget, Msg};
 
 #[derive(Msg)]
