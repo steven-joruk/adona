@@ -14,13 +14,22 @@ pub struct Database {
 
 impl Database {
     pub fn update(&self) {
-        println!("TODO: Update");
+        println!("TODO: Update database");
+    }
+
+    // TODO: Maybe HashSet should switch to HashMap
+    pub fn find(&self, name: &str) -> Option<Addon> {
+        self.addons
+            .iter()
+            .find(|a| a.name == *name)
+            .clone()
+            .map(|a| a.clone())
     }
 
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Database> {
         let addons: HashSet<Addon>;
 
-        match fs::File::open(path) {
+        match fs::File::open(&path) {
             Ok(file) => {
                 println!("Loading the database from {}", path.as_ref().display());
                 let reader = io::BufReader::new(file);

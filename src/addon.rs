@@ -10,9 +10,10 @@ use crate::error::{Error, Result};
 pub trait AddonSource {
     fn check(&self) -> Result<DateTime<Local>>;
     fn download(&self) -> Result<()>;
+    fn install(&self) -> Result<()>;
 }
 
-#[derive(Deserialize, Eq)]
+#[derive(Clone, Debug, Deserialize, Eq)]
 pub struct Addon {
     pub name: String,
     pub stars: u32,
@@ -37,17 +38,17 @@ impl PartialEq for Addon {
     }
 }
 
-#[derive(Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct GitHubRelease {
     owner: String,
     repo: String,
 }
 
-impl AddonSource for GitHubRelease {
+impl AddonSource for Addon {
     fn check(&self) -> Result<DateTime<Local>> {
         let uri = format!(
             "https://api.github.com/repos/{}/{}/releases/latest",
-            self.owner, self.repo
+            self.source.owner, self.source.repo
         );
         let text = reqwest::get(&uri)?.text()?;
         let data = json::parse(&text)?;
@@ -60,6 +61,12 @@ impl AddonSource for GitHubRelease {
     }
 
     fn download(&self) -> Result<()> {
+        println!("TODO: Download {}", self.name);
+        Ok(())
+    }
+
+    fn install(&self) -> Result<()> {
+        println!("TODO: Install {}", self.name);
         Ok(())
     }
 }

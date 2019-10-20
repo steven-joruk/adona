@@ -1,3 +1,4 @@
+use crate::addon::AddonSource;
 use crate::database::Database;
 
 use gtk::prelude::*;
@@ -18,25 +19,35 @@ pub enum Msg {
 }
 
 pub struct Model {
-    has_selection: bool,
+    database: Database,
+    selected_addon_name: Option<String>,
 }
 
 #[widget]
 impl Widget for AvailableWidget {
     fn model(_: &Relm<Self>, _: ()) -> Model {
         Model {
-            has_selection: false,
+            // TODO: Don't unwrap
+            database: Database::load(DATABASE_PATH).unwrap(),
+            selected_addon_name: None,
         }
     }
 
     fn update(&mut self, event: Msg) {
         match event {
-            Msg::InstallAddon => println!("Install"),
+            Msg::InstallAddon => {
+                if let Some(name) = &self.model.selected_addon_name {
+                    self.model
+                        .database
+                        .find(name)
+                        .and_then(|a| a.install().ok());
+                };
+            }
             Msg::SelectionChanged(selection) => match selection.get_selected() {
                 Some((tree_model, iter)) => {
-                    self.model.has_selection = true;
+                    self.model.selected_addon_name = tree_model.get_value(&iter, 0).get();
                 }
-                None => self.model.has_selection = false,
+                None => self.model.selected_addon_name = None,
             },
             Msg::SubmitAddon => {
                 if let Err(e) = webbrowser::open(ADDON_SUBMISSION_URL) {
@@ -47,7 +58,7 @@ impl Widget for AvailableWidget {
                 }
             }
             Msg::UpdateDatabase => {
-                println!("Update database");
+                self.model.database.update();
                 self.update_tree_view_model();
             }
         }
@@ -59,15 +70,7 @@ impl Widget for AvailableWidget {
     fn update_tree_view_model(&mut self) {
         let store = gtk::ListStore::new(&[String::static_type(), String::static_type()]);
 
-        let available = match Database::load(DATABASE_PATH) {
-            Ok(a) => a,
-            Err(_) => {
-                // TODO: Show an error dialog.
-                return;
-            }
-        };
-
-        for addon in available {
+        for addon in &self.model.database.addons {
             store.insert_with_values(None, &[0, 1], &[&addon.name, &addon.description]);
         }
 
@@ -106,7 +109,7 @@ impl Widget for AvailableWidget {
                 spacing: super::PADDING,
                 gtk::Button {
                     label: "Install",
-                    sensitive: self.model.has_selection,
+                    sensitive: self.model.selected_addon_name.is_some(),
                     clicked => Msg::InstallAddon,
                 },
                 // TODO: Add a 'last updated' tooltip

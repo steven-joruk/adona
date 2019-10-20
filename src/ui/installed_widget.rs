@@ -4,32 +4,40 @@ use relm_derive::{widget, Msg};
 
 #[derive(Msg)]
 pub enum Msg {
-    DeleteAddon,
+    UninstallAddon,
     UpdateAddon,
     SelectionChanged(gtk::TreeSelection),
 }
 
 pub struct Model {
-    has_selection: bool,
+    selected_addon_name: Option<String>,
 }
 
 #[widget]
 impl Widget for InstalledWidget {
     fn model(_: &Relm<Self>, _: ()) -> Model {
         Model {
-            has_selection: false,
+            selected_addon_name: None,
         }
     }
 
     fn update(&mut self, event: Msg) {
         match event {
-            Msg::DeleteAddon => println!("Delete"),
-            Msg::UpdateAddon => println!("Update"),
+            Msg::UninstallAddon => {
+                if let Some(name) = &self.model.selected_addon_name {
+                    println!("TODO: Uninstall {}", name);
+                };
+            }
+            Msg::UpdateAddon => {
+                if let Some(name) = &self.model.selected_addon_name {
+                    println!("TODO: Update {}", name);
+                };
+            }
             Msg::SelectionChanged(selection) => match selection.get_selected() {
                 Some((tree_model, iter)) => {
-                    self.model.has_selection = true;
+                    self.model.selected_addon_name = tree_model.get_value(&iter, 0).get();
                 }
-                None => self.model.has_selection = false,
+                None => self.model.selected_addon_name = None,
             },
         }
     }
@@ -103,13 +111,13 @@ impl Widget for InstalledWidget {
                 spacing: super::PADDING,
                 gtk::Button {
                     label: "Update",
-                    sensitive: self.model.has_selection,
+                    sensitive: self.model.selected_addon_name.is_some(),
                     clicked => Msg::UpdateAddon,
                 },
                 gtk::Button {
-                    label: "Delete",
-                    sensitive: self.model.has_selection,
-                    clicked => Msg::DeleteAddon,
+                    label: "Uninstall",
+                    sensitive: self.model.selected_addon_name.is_some(),
+                    clicked => Msg::UninstallAddon,
                 },
                 #[name="search_entry"]
                 gtk::SearchEntry {
