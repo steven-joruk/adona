@@ -1,0 +1,21 @@
+[package]
+name = "adona"
+version = "0.1.0"
+authors = ["Steven Joruk <steven@joruk.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+adoman = { path = "../adoman" }
+chrono = { version = "0.4", features = ["serde"] }
+futures = "0.3"
+gtk = { version = "0.8", features = ["v3_24"] }
+gio = { version = "0.8", features = ["v2_58"] }
+glib = "0.9"
+relm = "0.19"
+relm-derive = "0.19"
+json = "0.12"
+regex = "1"
+serde = "1"
+webbrowser = "0.5"
